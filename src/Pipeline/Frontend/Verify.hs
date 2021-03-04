@@ -8,16 +8,19 @@ import Pipeline.Frontend.Pipe (Pipe(..), ChainF(..), Chain)
 
 import Control.Monad (forM_)
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
-import Control.Monad.State (StateT, get, put, runStateT)
+import Control.Monad.State (StateT, get, put, evalStateT)
 import Control.Monad.Trans (lift)
 
 import qualified Data.Map as M (Map, lookup)
-import qualified Data.Set as S (Set, member, insert)
+import qualified Data.Set as S (Set, member, insert, empty)
 import Data.Typeable (typeOf, typeRepArgs)
 
 
-verifyPipe :: Pipe -> StateT (S.Set PID) IO ()
-verifyPipe (Pipe p) = verifyFirstChain p
+verifyPipe :: Pipe -> IO ()
+verifyPipe p = evalStateT (verifyPipe' p) S.empty
+
+verifyPipe' :: Pipe -> StateT (S.Set PID) IO ()
+verifyPipe' (Pipe p) = verifyFirstChain p
   where 
     verifyFirstChain :: Chain f a g b -> StateT (S.Set PID) IO ()
     verifyFirstChain (IIn4 (ProcessF pid)) = do
@@ -28,13 +31,15 @@ verifyPipe (Pipe p) = verifyFirstChain p
     verifyFirstChain (IIn4 (JoinF x y)) = do
       verifyFirstChain x
       verifyFirstChain y
-verifyPipe (And x y) = do
-  verifyPipe x
+verifyPipe' (And x y) = do
+  verifyPipe' x
   verifyOtherPipes y
   where
     verifyOtherPipes :: Pipe -> StateT (S.Set PID) IO ()
     verifyOtherPipes (Pipe p) = verifyChain p
-    verifyOtherPipes (And x y) = undefined
+    verifyOtherPipes (And x y) = do
+      verifyOtherPipes x
+      verifyOtherPipes y
     verifyChain :: Chain f a g b -> StateT (S.Set PID) IO ()
     verifyChain (IIn4 (ProcessF pid)) = do
       s <- get

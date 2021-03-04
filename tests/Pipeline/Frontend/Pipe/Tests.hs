@@ -7,29 +7,12 @@ import Control.Monad.State (evalState, execState)
 import Control.Monad.Reader (runReaderT)
 
 import Pipeline.Frontend.Pipe
-import Pipeline.Core.Task
-import Pipeline.Core.DataStore
+import Pipeline.Frontend.Workflow
+import Pipeline.Frontend.Verify
 
-readIOTask :: Task IOStore String VariableStore Int
-readIOTask = functionTask (read :: String -> Int) Empty
+import Pipeline.Frontend.Utils
 
-plus1Task :: Task VariableStore Int VariableStore Int
-plus1Task = functionTask (+ (1 :: Int)) Empty
 
-showFileTask :: FilePath -> Task VariableStore Int FileStore String
-showFileTask f = functionTask (show :: Int -> String) (FileStore f)
-  
-replicateTask :: Task VariableStore Int VariableStore [Int]
-replicateTask = functionTask (replicate 100) Empty
-
-zipWithSelf :: FilePath -> Task VariableStore [Int] CSVStore [(Int, Int)]
-zipWithSelf f = functionTask (\xs -> zip xs xs) (CSVStore f)
-
-zipWith1To100 :: FilePath -> Task VariableStore [Int] CSVStore [(Int, Int)]
-zipWith1To100 f = functionTask (zip [1..100]) (CSVStore f)
-
-zipWith100To1 :: FilePath -> Task VariableStore [Int] CSVStore [(Int, Int)]
-zipWith100To1 f = functionTask (zip [100, 99..1]) (CSVStore f)
 
 testWorkflow1 :: Workflow Pipe
 testWorkflow1 = do
@@ -69,16 +52,3 @@ nextPIDTests = testGroup "nextPID should"
   ]
 
 
-extractLeafsTests :: TestTree
-extractLeafsTests = testGroup "extractLeafs should"
-  [ testCase "return " $ do return ()]
-
-
-verifyTreeTests :: TestTree
-verifyTreeTests = testGroup "verifyTree should"
-  [ testCase "print types" $ do
-      print "hello tests!"
-      let (p, s) = buildTree testWorkflow2
-      let pidTree = pipeToTree p
-      runReaderT (verifyTree pidTree) (tasks s)
-  ]
