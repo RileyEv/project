@@ -14,15 +14,15 @@ import Pipeline.Core.IFunctor (IFix2(..), IFunctor2(..))
 {-|
   The main wrapping data type for a function. This makes working with the function type easier. 
 -}
-data TaskF (iF :: [*] -> [*] -> *) (fas :: [*]) (gb :: [*]) = forall fs as g b. (
-  fas ~ Apply fs as,
-  gb ~ Apply '[g] '[b],
-  DataSource' fs as (Apply fs as),
-  DataSource g b,
-  Typeable (Apply fs as),
-  Typeable fs, Typeable g,
-  Typeable as, Typeable b)
-  => TaskF (HList (Apply fs as) -> g b -> IO (g b)) (g b)
+data TaskF (iF :: [*] -> [*] -> *) (fas :: [*]) (gb :: [*]) where
+  TaskF :: (fas ~ Apply fs as,
+            gb ~ Apply '[g] '[b],
+            DataSource' fs as (Apply fs as),
+            DataSource g b,
+            Typeable (Apply fs as),
+            Typeable fs, Typeable g,
+            Typeable as, Typeable b)
+    => (HList fas -> g b -> IO (g b)) -> g b -> TaskF iF fas gb
 
 instance IFunctor2 TaskF where
   imap2 _ (TaskF f output) = TaskF f output
