@@ -13,7 +13,7 @@ data TaskTreeF f i o where
   TBranchF :: (fas ~ Apply fs as)
           => IFix2 TaskF fas '[g b]
           -> FList f '[g b] hcs
-          -> TaskTreeF f (Apply fs as) hcs
+          -> TaskTreeF f fas hcs
   TLeafF :: (fas ~ Apply fs as, DataSource' fs as fas, DataSource' '[g] '[b] '[g b]) => IFix2 TaskF fas '[g b] -> TaskTreeF f fas '[g b]
 
 
@@ -24,3 +24,4 @@ data DataTreeF f i o where
 data FList (f :: [*] -> [*] -> *) (is :: [*]) (xs :: [*]) where
   FCons :: f is xs -> FList f is ys -> FList f is (HAppendListR xs ys)
   FNil  :: FList f is '[]
+
